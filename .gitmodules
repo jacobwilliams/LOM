@@ -1,0 +1,6 @@
+[submodule "src/ddeabm"]
+	path = src/ddeabm
+	url = https://github.com/jacobwilliams/ddeabm.git
+[submodule "src/Fortran-Astrodynamics-Toolkit.git"]
+	path = src/Fortran-Astrodynamics-Toolkit.git
+	url = https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit.git
