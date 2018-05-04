@@ -14,7 +14,7 @@
     character(len=*),parameter :: ephemeris_file = '../data/eph/JPLEPH_gfortran_mac.421'
     character(len=*),parameter :: gravfile       = '../data/grav/gggrx_0020pm_sha.tab'
 
-    type,extends(ddeabm_with_event_class) :: segment
+    type,extends(ddeabm_with_event_class),public :: segment
 
         !! the main class for integrating a LLO
 
@@ -44,10 +44,9 @@
         contains
 
         procedure,public :: initialize_seg => initialize_segment
+        procedure,public :: altitude_maintenance
 
     end type segment
-
-    public :: altitude_maintenance
 
     contains
 !*****************************************************************************************
@@ -71,10 +70,12 @@
                                 [me%integrator_tol],[me%integrator_tol],&
                                  event_func,me%root_tol)
 
-    ! set up the ephemeris:
-    write(*,*) 'loading ephemeris file: '//trim(ephemeris_file)
-    call me%eph%initialize(filename=ephemeris_file,status_ok=status_ok)
-    if (.not. status_ok) error stop 'error initializing ephemeris'
+    if (me%include_third_bodies) then
+        ! set up the ephemeris:
+        write(*,*) 'loading ephemeris file: '//trim(ephemeris_file)
+        call me%eph%initialize(filename=ephemeris_file,status_ok=status_ok)
+        if (.not. status_ok) error stop 'error initializing ephemeris'
+    end if
 
     ! set up the force model [main body is moon]:
     write(*,*) 'loading gravity file: '//trim(gravfile)
@@ -92,15 +93,14 @@
 !>
 !  Altitude maintenance for a circular lunar orbit - periapsis only control.
 
-    subroutine altitude_maintenance(et0,alt0,inc0,ran0,deadband_alt,dt_max,n_dvs,dv_total,xf)
+    subroutine altitude_maintenance(seg,et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
 
     implicit none
 
+    class(segment),intent(inout)      :: seg
     real(wp),intent(in)               :: et0          !! initial ephemeris time (sec)
-    real(wp),intent(in)               :: alt0         !! initial altitude for circular orbit (km)
     real(wp),intent(in)               :: inc0         !! initial inclination - IAU_MOON of date (deg)
     real(wp),intent(in)               :: ran0         !! initial RAAN - IAU_MOON of date (deg)
-    real(wp),intent(in)               :: deadband_alt !! altitude below initial to trigger periapsis raise (km)
     real(wp),intent(in)               :: dt_max       !! how long to propagate (days)
     integer,intent(out)               :: n_dvs        !! number of DV maneuvers performed
     real(wp),intent(out)              :: dv_total     !! total DV (km/s)
@@ -119,14 +119,9 @@
     real(wp) :: a, p, ecc, inc, raan, aop, tru
     real(wp) :: rp1,ra1,vp1,va1,rp2,va2
 
-    type(segment) :: seg  !! the integrator
-
-    ! initialize the segment:
-    call seg%initialize_seg(alt0,deadband_alt)
-
     n_dvs = 0
     dv_total = zero
-    sma = seg%r_moon + alt0  ! initial orbit sma (circular)
+    sma = seg%r_moon + seg%nominal_altitude  ! initial orbit sma (circular)
 
     ! get initial state in J2000 - Cartesian for integration
     ! note that inc,ran are in moon-centered-of-date-frame
@@ -143,7 +138,8 @@
     tf = dt_max*day2sec
     seg%event = 1  ! propagate until the altitude is less than min_altitude
 
-    write(*,*) 'starting integration loop...'
+    !write(*,*) 'starting integration loop...'
+    call seg%first_call()
     ! main integration loop:
     do
 
@@ -157,12 +153,12 @@
         elseif (idid==2 .or. idid==3) then
             ! if we reached the max time, then we are done, so exit
 
-            write(*,*) 'done'
+            !write(*,*) 'done'
             exit
 
         elseif (idid == 1000) then  ! a root has been found
 
-            write(*,*) 'event found'
+            !write(*,*) 'event found'
 
             select case (seg%event)
             case(1)
@@ -175,7 +171,7 @@
 
             case (2)
 
-                write(*,*) 'apoapsis at ', t*sec2day, 'days'
+                !write(*,*) 'apoapsis at ', t*sec2day, 'days'
                 ! we have propagated to apoapsis, perform a maneuver to raise periapsis
 
                 ! compute current orbit elements:
@@ -184,16 +180,16 @@
                 call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
 
                 rp2 = sma ! desired periapsis radius for new orbit
-                write(*,*) 'rp1=',rp1
-                write(*,*) 'ra1=',ra1
-                write(*,*) 'rp2=',rp2
-                if (rp1>(rp2-deadband_alt)) then
+                ! write(*,*) 'rp1=',rp1
+                ! write(*,*) 'ra1=',ra1
+                ! write(*,*) 'rp2=',rp2
+                if (rp1>(rp2-seg%deadband)) then
                     write(*,*) 'dv not necessary'
                     ! in this case, the osculating periapsis radius has not
                     ! violated the deadband altitude after all, so just
                     ! continue without doing a maneuver.
                 else
-                    write(*,*) 'dv to raise rp from ', rp1, ' at ', t*sec2day, 'days'
+                    !write(*,*) 'dv to raise rp from ', rp1, ' at ', t*sec2day, 'days'
 
                     ! apoapsis velocity to raise periapsis radius to rp2
                     va2 = sqrt( two * body_moon%mu * ( one/ra1 - one/(rp2+ra1) ) )
@@ -208,19 +204,19 @@
                     call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
                     a = p / (one - ecc*ecc)
                     call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
-                    write(*,*) ''
-                    write(*,*) '-----'
-                    write(*,*) 'after dv'
-                    write(*,*) 'rp = ',rp1
-                    write(*,*) 'ra = ',ra1
-                    write(*,*) '-----'
-                    write(*,*) ''
+                    ! write(*,*) ''
+                    ! write(*,*) '-----'
+                    ! write(*,*) 'after dv'
+                    ! write(*,*) 'rp = ',rp1
+                    ! write(*,*) 'ra = ',ra1
+                    ! write(*,*) '-----'
+                    ! write(*,*) ''
 
                     ! keep track of totals:
                     n_dvs = n_dvs + 1
                     dv_total = dv_total + dv
 
-                    write(*,*) 'DV', n_dvs, dv
+                    !write(*,*) 'DV', n_dvs, dv
 
                 end if
 

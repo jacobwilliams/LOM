@@ -1,37 +1,99 @@
     program main
 
-    use altitude_maintenance_module
+    use altitude_maintenance_module, only: segment
     use fortran_astrodynamics_toolkit, only: wp
+    use pyplot_module, only : pyplot
 
     implicit none
 
-    real(wp) :: et0          !! initial ephemeris time (sec)
-    real(wp) :: alt0         !! initial altitude for circular orbit (km)
-    real(wp) :: inc0         !! initial inclination - IAU_MOON of date (deg)
-    real(wp) :: ran0         !! initial RAAN - IAU_MOON of date (deg)
-    real(wp) :: deadband_alt !! altitude below initial to trigger periapsis raise (km)
-    real(wp) :: dt_max       !! how long to propagate (days)
-    integer  :: n_dvs        !! number of DV maneuvers performed
-    real(wp) :: dv_total     !! total DV (km/s)
-    real(wp),dimension(6) :: xf           !! final state - inertial frame (km, km/s)
+    real(wp) :: et0              !! initial ephemeris time (sec)
+    real(wp) :: inc0             !! initial inclination - IAU_MOON of date (deg)
+    real(wp) :: ran0             !! initial RAAN - IAU_MOON of date (deg)
+    real(wp) :: dt_max           !! how long to propagate (days)
+    integer  :: n_dvs            !! number of DV maneuvers performed
+    real(wp) :: dv_total         !! total DV (km/s)
+    real(wp),dimension(6) :: xf  !! final state - inertial frame (km, km/s)
+    integer :: i_inc             !! inclination counter
+    integer :: i_raan            !! raan counter
+    type(pyplot) :: plt   !! pyplot handler
+    real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
+    real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
+    real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
 
-    et0  = 0.0_wp
-    alt0 = 100.0_wp
-    inc0 = 100.0_wp  ! three maneuvers
-    ran0 = 45.0_wp
+    !integer,parameter :: inc_start = 90
+    !integer,parameter :: inc_stop  = 180
+    !integer,parameter :: lan_start = -180
+    !integer,parameter :: lan_stop  = 180
+
+    ! integer,parameter :: inc_start = 90
+    ! integer,parameter :: inc_stop  = 92
+    ! integer,parameter :: lan_start = 0
+    ! integer,parameter :: lan_stop  = 45
+
+    integer,parameter :: inc_start = 80
+    integer,parameter :: inc_stop  = 100
+    integer,parameter :: lan_start = -180
+    integer,parameter :: lan_stop  = 179
+
+    ! ... test cases ...
+    !inc0 = 100.0_wp  ! three maneuvers
+    !ran0 = 45.0_wp
     !inc0 = 90.0_wp   ! no maneuvers
     !ran0 = 0.0_wp
-    deadband_alt = 10.0_wp
-    dt_max = 10.0_wp
 
-    write(*,*) ''
-    write(*,*) 'starting...'
-    write(*,*) ''
+    type(segment) :: seg  !! the integrator
 
-    call altitude_maintenance(et0,alt0,inc0,ran0,deadband_alt,dt_max,n_dvs,dv_total,xf)
+    real(wp),parameter :: alt0 = 100.0_wp  !! initial altitude for circular orbit (km)
+    real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
 
-    write(*,*) ''
-    write(*,*) 'finished'
-    write(*,*) ''
+    ! initialize the segment:
+    call seg%initialize_seg(alt0,deadband_alt)
+
+    call plt%initialize(grid=.true.,xlabel='LAN (deg)',&
+                        ylabel='INC (deg)',figsize=[10,10],&
+                        title='Lunar Orbit Maintenance : deadband = 100 km : dt = 10 days', real_fmt='*')
+
+    ! initialize the indep arrays:
+    x = [(real(i_raan, wp), i_raan = lan_start, lan_stop)]
+    y = [(real(i_inc, wp),  i_inc  = inc_start, inc_stop)]
+    !allocate(z(size(x), size(y)))
+    allocate(z(lan_start:lan_stop, inc_start:inc_stop))
+    z = 0.0_wp
+
+    do i_inc = inc_start, inc_stop
+
+        inc0 = real(i_inc, wp)
+
+        do i_raan = lan_start, lan_stop
+
+            ran0 = real(i_raan, wp)
+
+            write(*,*) ''
+            write(*,*) '============'
+            write(*,*) 'inc, ran', inc0, ran0
+            write(*,*) '============'
+            write(*,*) ''
+
+            et0  = 0.0_wp
+            dt_max = 10.0_wp
+
+            ! write(*,*) ''
+            ! write(*,*) 'starting...'
+            ! write(*,*) ''
+
+            call seg%altitude_maintenance(et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
+
+            z(i_raan,i_inc) = dv_total
+            ! write(*,*) ''
+            ! write(*,*) 'finished'
+            ! write(*,*) ''
+
+        end do
+
+    end do
+
+    call plt%add_contour(x, y, z, label='contour', linestyle='-', &
+                         linewidth=2, filled=.true., cmap='jet')
+    call plt%savefig('lom.png',pyfile='lom.py')
 
     end program main

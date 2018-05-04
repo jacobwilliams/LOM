@@ -18,7 +18,7 @@ $CSTATIC_INT  = -c -std15
 $DEBUG_INT    = -O0 -debug all -check all -warn all -extend-source 132 -traceback -gen-interfaces -fpe-all=0 -fp-stack-check -fstack-protector-all -ftrapuv -no-ftz -std15
 $EXCLUDE_DIRS = ./ddeabm/src/tests
                 ./Fortran-Astrodynamics-Toolkit.git/tests
-                ./Fortran-Astrodynamics-Toolkit.git/pyplot-fortran
+                ./Fortran-Astrodynamics-Toolkit.git/pyplot-fortran/src/tests
 
 # modes templates
 [template-static]
