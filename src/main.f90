@@ -6,21 +6,23 @@
 
     implicit none
 
-    real(wp) :: et0              !! initial ephemeris time (sec)
+    real(wp),parameter :: dt_max = 10.0_wp   !! how long to propagate (days)
+    real(wp),parameter :: et0  = 0.0_wp      !! initial ephemeris time (sec)
+                                             !! (only matters if including Earth/Sun perturbations)
+
     real(wp) :: inc0             !! initial inclination - IAU_MOON of date (deg)
     real(wp) :: ran0             !! initial RAAN - IAU_MOON of date (deg)
-    real(wp) :: dt_max           !! how long to propagate (days)
     integer  :: n_dvs            !! number of DV maneuvers performed
     real(wp) :: dv_total         !! total DV (km/s)
     real(wp),dimension(6) :: xf  !! final state - inertial frame (km, km/s)
     integer :: i_inc             !! inclination counter
     integer :: i_raan            !! raan counter
-    type(pyplot) :: plt   !! pyplot handler
+    type(pyplot) :: plt          !! pyplot handler
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
     real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
-    integer :: istat  !! pyplot status code
-    character(len=10) :: istr
+    integer :: istat             !! pyplot status code
+    character(len=10) :: istr    !! for integer to string conversion
 
     !integer,parameter :: inc_start = 90
     !integer,parameter :: inc_stop  = 180
@@ -32,22 +34,15 @@
     ! integer,parameter :: lan_start = 0
     ! integer,parameter :: lan_stop  = 45
 
-    !integer,parameter :: inc_start = 80
-    !integer,parameter :: inc_stop  = 100
-    !integer,parameter :: lan_start = -180
-    !integer,parameter :: lan_stop  = 179
-
     integer,parameter :: inc_start = 80
     integer,parameter :: inc_stop  = 85
-    integer,parameter :: lan_start = 100
-    integer,parameter :: lan_stop  = 150
+    integer,parameter :: lan_start = -180
+    integer,parameter :: lan_stop  = 179
 
-
-    ! ... test cases ...
-    !inc0 = 100.0_wp  ! three maneuvers
-    !ran0 = 45.0_wp
-    !inc0 = 90.0_wp   ! no maneuvers
-    !ran0 = 0.0_wp
+    ! integer,parameter :: inc_start = 80
+    ! integer,parameter :: inc_stop  = 85
+    ! integer,parameter :: lan_start = 100
+    ! integer,parameter :: lan_stop  = 150
 
     type(segment) :: seg  !! the integrator
 
@@ -63,11 +58,8 @@
                         real_fmt='(E9.3)')
 
     ! initialize the indep arrays:
-    !x = [(real(i_raan, wp), i_raan = lan_start, lan_stop)]
-    !y = [(real(i_inc, wp),  i_inc  = inc_start, inc_stop)]
     allocate(x(lan_start:lan_stop))
     allocate(y(inc_start:inc_stop))
-    !allocate(z(size(x), size(y)))
     allocate(z(lan_start:lan_stop, inc_start:inc_stop))
     z = 0.0_wp
 
@@ -87,19 +79,9 @@
             write(*,*) '============'
             write(*,*) ''
 
-            et0  = 0.0_wp
-            dt_max = 10.0_wp
-
-            ! write(*,*) ''
-            ! write(*,*) 'starting...'
-            ! write(*,*) ''
-
             call seg%altitude_maintenance(et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
 
             z(i_raan,i_inc) = dv_total * km2m ! in meters
-            ! write(*,*) ''
-            ! write(*,*) 'finished'
-            ! write(*,*) ''
 
         end do
 

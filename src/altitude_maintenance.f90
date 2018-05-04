@@ -39,7 +39,7 @@
         integer  :: maxsteps = 1000000    !! integrator max steps
         integer  :: grav_n = 8            !! max grav degree
         integer  :: grav_m = 8            !! max grav order
-        real(wp) :: root_tol = 1.0e-3_wp  !! event tolerance for deadband (km)
+        real(wp) :: root_tol = 1.0e-6_wp  !! event tolerance for deadband (km)
 
         contains
 
@@ -111,12 +111,12 @@
     real(wp) :: min_altitude !! minimum altitude (km)
     real(wp),dimension(3,3) :: rotmat  !! rotation matrix from ICRF to IAU_MOON
     real(wp) :: dv !! periapsis raise maneuver magnitude [km/s]
-    real(wp),dimension(6) :: x
+    real(wp),dimension(6) :: x  !! J2000-Moon state vector
     real(wp) :: t  !! integration time (sec from et0)
     real(wp) :: tf !! final integration time (sec from et0)
     integer :: idid !! integrator status flag
     real(wp) :: gval  !! event function value
-    real(wp) :: a, p, ecc, inc, raan, aop, tru
+    real(wp) :: a, p, ecc, inc, raan, aop, tru, tru2
     real(wp) :: rp1,ra1,vp1,va1,rp2,va2
 
     n_dvs = 0
@@ -162,7 +162,7 @@
 
             select case (seg%event)
             case(1)
-                write(*,*) 'min altitude at ', t*sec2day, 'days'
+                write(*,*) 'min altitude at ', t*sec2hr, 'hr'
                 ! if we hit the min altitude, then integrate to next apoapsis
                 ! and raise the periapsis:
                 seg%event = 2 ! propagate until apoapsis
@@ -171,24 +171,25 @@
 
             case (2)
 
-                !write(*,*) 'apoapsis at ', t*sec2day, 'days'
                 ! we have propagated to apoapsis, perform a maneuver to raise periapsis
 
                 ! compute current orbit elements:
                 call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
                 a = p / (one - ecc*ecc)
                 call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
+                tru = tru*rad2deg ! converg to deg
 
                 rp2 = sma ! desired periapsis radius for new orbit
                 ! write(*,*) 'rp1=',rp1
                 ! write(*,*) 'ra1=',ra1
                 ! write(*,*) 'rp2=',rp2
-                if (rp1>(rp2-seg%deadband)) then
+                if (rp1>(rp2-seg%deadband)) then  ! HACK - IGNORE PERIAPSIS ROOTS
                     write(*,*) 'dv not necessary'
                     ! in this case, the osculating periapsis radius has not
                     ! violated the deadband altitude after all, so just
                     ! continue without doing a maneuver.
-                else
+                elseif ( tru>179.0_wp .and. tru<181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
+
                     !write(*,*) 'dv to raise rp from ', rp1, ' at ', t*sec2day, 'days'
 
                     ! apoapsis velocity to raise periapsis radius to rp2
@@ -201,7 +202,7 @@
                     x(4:6) = x(4:6) + dv * unit(x(4:6))
 
                     ! ... check results:
-                    call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
+                    call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru2)
                     a = p / (one - ecc*ecc)
                     call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
                     ! write(*,*) ''
@@ -215,6 +216,8 @@
                     ! keep track of totals:
                     n_dvs = n_dvs + 1
                     dv_total = dv_total + dv
+
+                    write(*,*) 'apoapsis at ', t*sec2hr, 'hr', ' : TRU = ', tru, ' : dv = ', dv
 
                     !write(*,*) 'DV', n_dvs, dv
 
@@ -278,9 +281,14 @@
             g = alt - (me%nominal_altitude - me%deadband)
         case (2)
             ! offset from a true anomaly of 180 (apoapsis)
+
+            !... this is also catching periapsis ....  how to get only apoapsis ?????
+            ! ... have to update ddeabm to allow for user-specified bracket function ...
+
             call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
             if (tru<zero) tru = tru + twopi  ! from 0 -> 360
             g = tru - pi
+
         case default
             error stop 'invalid event value in event_func'
         end select
