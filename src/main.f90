@@ -1,7 +1,7 @@
     program main
 
     use altitude_maintenance_module, only: segment
-    use fortran_astrodynamics_toolkit, only: wp
+    use fortran_astrodynamics_toolkit, only: wp,km2m
     use pyplot_module, only : pyplot
 
     implicit none
@@ -19,6 +19,7 @@
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
     real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
+    integer :: istat  !! pyplot status code
 
     !integer,parameter :: inc_start = 90
     !integer,parameter :: inc_stop  = 180
@@ -30,10 +31,16 @@
     ! integer,parameter :: lan_start = 0
     ! integer,parameter :: lan_stop  = 45
 
+    !integer,parameter :: inc_start = 80
+    !integer,parameter :: inc_stop  = 100
+    !integer,parameter :: lan_start = -180
+    !integer,parameter :: lan_stop  = 179
+
     integer,parameter :: inc_start = 80
-    integer,parameter :: inc_stop  = 100
-    integer,parameter :: lan_start = -180
-    integer,parameter :: lan_stop  = 179
+    integer,parameter :: inc_stop  = 85
+    integer,parameter :: lan_start = 100
+    integer,parameter :: lan_stop  = 150
+
 
     ! ... test cases ...
     !inc0 = 100.0_wp  ! three maneuvers
@@ -50,12 +57,15 @@
     call seg%initialize_seg(alt0,deadband_alt)
 
     call plt%initialize(grid=.true.,xlabel='LAN (deg)',&
-                        ylabel='INC (deg)',figsize=[10,10],&
-                        title='Lunar Orbit Maintenance : deadband = 100 km : dt = 10 days', real_fmt='*')
+                        ylabel='Inc (deg)',figsize=[10,10],&
+                        title='Lunar Orbit Maintenance $\Delta v$ (m/s): deadband = 100 km : dt = 10 days',&
+                        real_fmt='(E9.3)')
 
     ! initialize the indep arrays:
-    x = [(real(i_raan, wp), i_raan = lan_start, lan_stop)]
-    y = [(real(i_inc, wp),  i_inc  = inc_start, inc_stop)]
+    !x = [(real(i_raan, wp), i_raan = lan_start, lan_stop)]
+    !y = [(real(i_inc, wp),  i_inc  = inc_start, inc_stop)]
+    allocate(x(lan_start:lan_stop))
+    allocate(y(inc_start:inc_stop))
     !allocate(z(size(x), size(y)))
     allocate(z(lan_start:lan_stop, inc_start:inc_stop))
     z = 0.0_wp
@@ -63,10 +73,12 @@
     do i_inc = inc_start, inc_stop
 
         inc0 = real(i_inc, wp)
+        y(i_inc) = inc0
 
         do i_raan = lan_start, lan_stop
 
             ran0 = real(i_raan, wp)
+            x(i_raan) = ran0
 
             write(*,*) ''
             write(*,*) '============'
@@ -83,7 +95,7 @@
 
             call seg%altitude_maintenance(et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
 
-            z(i_raan,i_inc) = dv_total
+            z(i_raan,i_inc) = dv_total * km2m ! in meters
             ! write(*,*) ''
             ! write(*,*) 'finished'
             ! write(*,*) ''
@@ -93,7 +105,16 @@
     end do
 
     call plt%add_contour(x, y, z, label='contour', linestyle='-', &
-                         linewidth=2, filled=.true., cmap='jet')
-    call plt%savefig('lom.png',pyfile='lom.py')
+                         linewidth=2, filled=.true., cmap='jet', colorbar=.true.,istat=istat)
+    call plt%savefig('lom.png',pyfile='lom.py',istat=istat)
+
+    ! print some stats:
+    write(*,*) ''
+    write(*,*) '-- Stats --'
+    do i_inc = inc_start, inc_stop
+        write(*,*) ''
+        write(*,*) 'max dv for inc ', y(i_inc), ' : ', maxval(z(:,i_inc)), 'm/s'
+        write(*,*) 'min dv for inc ', y(i_inc), ' : ', minval(z(:,i_inc)), 'm/s'
+    end do
 
     end program main
