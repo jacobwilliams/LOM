@@ -20,6 +20,7 @@
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
     real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
     integer :: istat  !! pyplot status code
+    character(len=10) :: istr
 
     !integer,parameter :: inc_start = 90
     !integer,parameter :: inc_stop  = 180
@@ -58,7 +59,7 @@
 
     call plt%initialize(grid=.true.,xlabel='LAN (deg)',&
                         ylabel='Inc (deg)',figsize=[10,10],&
-                        title='Lunar Orbit Maintenance $\Delta v$ (m/s): deadband = 100 km : dt = 10 days',&
+                        title='Lunar Orbit Maintenance $\Delta v$ (m/s) : deadband = 10 km : dt = 10 days',&
                         real_fmt='(E9.3)')
 
     ! initialize the indep arrays:
@@ -115,6 +116,17 @@
         write(*,*) ''
         write(*,*) 'max dv for inc ', y(i_inc), ' : ', maxval(z(:,i_inc)), 'm/s'
         write(*,*) 'min dv for inc ', y(i_inc), ' : ', minval(z(:,i_inc)), 'm/s'
+
+        ! also make plots for each inc value:
+        write(istr,'(I10)') int(y(i_inc))
+        call plt%destroy()
+        call plt%initialize(grid=.true.,xlabel='LAN (deg)',&
+                            ylabel='$\Delta v$ (m/s)',figsize=[10,10],&
+                            title='Lunar Orbit Maintenance : deadband = 10 km : dt = 10 days : Inc='//trim(adjustl(istr)),&
+                            real_fmt='(E9.3)')
+        call plt%add_plot(x, z(:,i_inc), linestyle='b-', label='dv', istat=istat)
+        call plt%savefig('lom_INC='//trim(adjustl(istr))//'.png',&
+                          pyfile='lom_INC='//trim(adjustl(istr))//'.py',istat=istat)
     end do
 
     end program main
