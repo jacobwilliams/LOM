@@ -31,15 +31,15 @@
 
         logical :: include_third_bodies = .false. !! to also include Earth and Sun in force model
 
-        type(geopotential_model_pines) :: grav !! central body geopotential model
-        type(jpl_ephemeris)            :: eph  !! the ephemeris
+        type(geopotential_model_pines) :: grav  !! central body geopotential model
+        type(jpl_ephemeris)            :: eph   !! the ephemeris
 
-        integer  :: n_eoms = 6            !! size of EOM derivative vector [x,y,z,vx,vy,vz]
-        real(wp) :: integrator_tol = 1.0e-10_wp !! integrator tols
-        integer  :: maxsteps = 1000000    !! integrator max steps
-        integer  :: grav_n = 8            !! max grav degree
-        integer  :: grav_m = 8            !! max grav order
-        real(wp) :: root_tol = 1.0e-6_wp  !! event tolerance for deadband (km)
+        integer  :: n_eoms = 6                  !! size of EOM derivative vector [x,y,z,vx,vy,vz]
+        real(wp) :: integrator_tol = 1.0e-12_wp !! integrator tols
+        integer  :: maxsteps = 1000000          !! integrator max steps
+        integer  :: grav_n = 8              !! max grav degree
+        integer  :: grav_m = 8              !! max grav order
+        real(wp) :: root_tol = 1.0e-6_wp        !! event tolerance for deadband (km)
 
         contains
 
@@ -176,20 +176,32 @@
                 ! compute current orbit elements:
                 call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
                 a = p / (one - ecc*ecc)
+                tru = tru*rad2deg ! convert to deg
+                if (tru<0.0_wp) tru = tru + 360.0_wp
                 call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
-                tru = tru*rad2deg ! converg to deg
-
                 rp2 = sma ! desired periapsis radius for new orbit
-                ! write(*,*) 'rp1=',rp1
-                ! write(*,*) 'ra1=',ra1
-                ! write(*,*) 'rp2=',rp2
-                if (rp1>(rp2-seg%deadband)) then  ! HACK - IGNORE PERIAPSIS ROOTS
+
+                if (rp1>(rp2-seg%deadband)) then
                     write(*,*) 'dv not necessary'
                     ! in this case, the osculating periapsis radius has not
                     ! violated the deadband altitude after all, so just
                     ! continue without doing a maneuver.
-                elseif ( tru>179.0_wp .and. tru<181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
 
+                ! elseif (tru<179.0_wp .or. tru>181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
+
+                !     write(*,*)  'oops stopped at periapsis : TRU=',tru, ' : t=', t*sec2hr, 'gval=',gval
+
+                !     ! we have to keep integrating, we stopped at periapsis ...
+                !     seg%event = 2  ! keep this...
+                !     call seg%first_call()  ! have to restart integration...
+                !     cycle
+
+                !     !... something wrong here... it's not working... getting stuck...
+
+                ! below: if we stopped at periapsis, just reset and continue with event mode 1
+                ! [not efficient, since we have to restart integration]
+                !
+                elseif (tru>=179.0_wp .and. tru<=181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
                     !write(*,*) 'dv to raise rp from ', rp1, ' at ', t*sec2day, 'days'
 
                     ! apoapsis velocity to raise periapsis radius to rp2
@@ -283,7 +295,8 @@
             ! offset from a true anomaly of 180 (apoapsis)
 
             !... this is also catching periapsis ....  how to get only apoapsis ?????
-            ! ... have to update ddeabm to allow for user-specified bracket function ...
+            ! ... have to update ddeabm to allow for user-specified bracket function
+            !     so we can test to see which one it's near ...
 
             call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
             if (tru<zero) tru = tru + twopi  ! from 0 -> 360
