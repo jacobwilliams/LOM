@@ -37,8 +37,8 @@
         integer  :: n_eoms = 6                  !! size of EOM derivative vector [x,y,z,vx,vy,vz]
         real(wp) :: integrator_tol = 1.0e-12_wp !! integrator tols
         integer  :: maxsteps = 1000000          !! integrator max steps
-        integer  :: grav_n = 8              !! max grav degree
-        integer  :: grav_m = 8              !! max grav order
+        integer  :: grav_n = 20 !8              !! max grav degree
+        integer  :: grav_m = 20 !8              !! max grav order
         real(wp) :: root_tol = 1.0e-6_wp        !! event tolerance for deadband (km)
 
         contains
@@ -98,24 +98,24 @@
     implicit none
 
     class(segment),intent(inout)      :: seg
-    real(wp),intent(in)               :: et0          !! initial ephemeris time (sec)
-    real(wp),intent(in)               :: inc0         !! initial inclination - IAU_MOON of date (deg)
-    real(wp),intent(in)               :: ran0         !! initial RAAN - IAU_MOON of date (deg)
-    real(wp),intent(in)               :: dt_max       !! how long to propagate (days)
-    integer,intent(out)               :: n_dvs        !! number of DV maneuvers performed
-    real(wp),intent(out)              :: dv_total     !! total DV (km/s)
-    real(wp),dimension(6),intent(out) :: xf           !! final state - inertial frame (km, km/s)
+    real(wp),intent(in)               :: et0      !! initial ephemeris time (sec)
+    real(wp),intent(in)               :: inc0     !! initial inclination - IAU_MOON of date (deg)
+    real(wp),intent(in)               :: ran0     !! initial RAAN - IAU_MOON of date (deg)
+    real(wp),intent(in)               :: dt_max   !! how long to propagate (days)
+    integer,intent(out)               :: n_dvs    !! number of DV maneuvers performed
+    real(wp),intent(out)              :: dv_total !! total DV (km/s)
+    real(wp),dimension(6),intent(out) :: xf       !! final state - inertial frame (km, km/s)
 
     real(wp),dimension(3) :: r,v
-    real(wp) :: sma          !! circular orbit semi-major axis [km]
-    real(wp) :: min_altitude !! minimum altitude (km)
     real(wp),dimension(3,3) :: rotmat  !! rotation matrix from ICRF to IAU_MOON
-    real(wp) :: dv !! periapsis raise maneuver magnitude [km/s]
     real(wp),dimension(6) :: x  !! J2000-Moon state vector
-    real(wp) :: t  !! integration time (sec from et0)
-    real(wp) :: tf !! final integration time (sec from et0)
-    integer :: idid !! integrator status flag
-    real(wp) :: gval  !! event function value
+    integer :: idid             !! integrator status flag
+    real(wp) :: sma             !! circular orbit semi-major axis [km]
+    real(wp) :: min_altitude    !! minimum altitude (km)
+    real(wp) :: dv              !! periapsis raise maneuver magnitude [km/s]
+    real(wp) :: t               !! integration time (sec from et0)
+    real(wp) :: tf              !! final integration time (sec from et0)
+    real(wp) :: gval            !! event function value
     real(wp) :: a, p, ecc, inc, raan, aop, tru, tru2
     real(wp) :: rp1,ra1,vp1,va1,rp2,va2
 
