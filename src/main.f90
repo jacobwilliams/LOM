@@ -1,15 +1,44 @@
+!*****************************************************************************************
+!>
+!  Altitude maintenance test program
+
     program main
 
-    use altitude_maintenance_module, only: segment
-    use fortran_astrodynamics_toolkit, only: wp,km2m
-    use pyplot_module, only : pyplot
+    use altitude_maintenance_module,    only: segment
+    use fortran_astrodynamics_toolkit,  only: wp,km2m
+    use pyplot_module,                  only : pyplot
+    use iso_fortran_env,                only: error_unit,output_unit
 
     implicit none
 
-    real(wp),parameter :: dt_max = 10.0_wp    !! how long to propagate (days)
-    real(wp),parameter :: et0  = 0.0_wp      !! initial ephemeris time (sec)
-                                             !! (only matters if including Earth/Sun perturbations)
+    real(wp),parameter :: dt_max = 10.0_wp       !! how long to propagate (days)
+    real(wp),parameter :: et0 = 0.0_wp           !! initial ephemeris time (sec)
+                                                 !! (only matters if including Earth/Sun perturbations)
+    real(wp),parameter :: tru0 = 0.0_wp          !! initial true anomaly (deg)
+    real(wp),parameter :: alt0 = 100.0_wp        !! initial altitude for circular orbit (km)
+    real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
+    integer,parameter  :: grav_n = 8 !20         !! max grav degree
+    integer,parameter  :: grav_m = 8 !20         !! max grav order
 
+    ! full data set:
+    ! real(wp),parameter :: inc_start = 80.0_wp
+    ! real(wp),parameter :: inc_stop  = 180.0_wp
+    ! real(wp),parameter :: inc_step  = 2.0_wp
+    ! real(wp),parameter :: lan_start = -180.0_wp
+    ! real(wp),parameter :: lan_stop  = 180.0_wp
+    ! real(wp),parameter :: lan_step  = 4.0_wp
+
+    ! test case:
+    real(wp),parameter :: inc_start = 80.0_wp
+    real(wp),parameter :: inc_stop  = 180.0_wp
+    real(wp),parameter :: inc_step  = 10.0_wp
+    real(wp),parameter :: lan_start = -180.0_wp
+    real(wp),parameter :: lan_stop  = 180.0_wp
+    real(wp),parameter :: lan_step  = 20.0_wp
+
+    real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
+    real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
+    real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
     real(wp) :: inc0             !! initial inclination - IAU_MOON of date (deg)
     real(wp) :: ran0             !! initial RAAN - IAU_MOON of date (deg)
     integer  :: n_dvs            !! number of DV maneuvers performed
@@ -18,43 +47,14 @@
     integer :: i_inc             !! inclination counter
     integer :: i_raan            !! raan counter
     type(pyplot) :: plt          !! pyplot handler
-    real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
-    real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
-    real(wp),dimension(:,:),allocatable :: z  !! z array for plot (dv)
     integer :: istat             !! pyplot status code
     character(len=10) :: istr    !! for integer to string conversion
-    character(len=10) :: dt_max_str,deadband_alt_str
-
-    ! test case:
-    ! real(wp),parameter :: inc_start = 80.0
-    ! real(wp),parameter :: inc_stop  = 85.0
-    ! real(wp),parameter :: inc_step  = 2.0
-    ! real(wp),parameter :: lan_start = -180.0
-    ! real(wp),parameter :: lan_stop  = 179.0
-    ! real(wp),parameter :: lan_step  = 2.0
-
-    ! full data set:
-    ! real(wp),parameter :: inc_start = 80.0
-    ! real(wp),parameter :: inc_stop  = 180.0
-    ! real(wp),parameter :: inc_step  = 2.0
-    ! real(wp),parameter :: lan_start = -180.0
-    ! real(wp),parameter :: lan_stop  = 180.0
-    ! real(wp),parameter :: lan_step  = 4.0
-
-    real(wp),parameter :: inc_start = 80.0
-    real(wp),parameter :: inc_stop  = 180.0
-    real(wp),parameter :: inc_step  = 10.0
-    real(wp),parameter :: lan_start = -180.0
-    real(wp),parameter :: lan_stop  = 180.0
-    real(wp),parameter :: lan_step  = 20.0
-
-    type(segment) :: seg  !! the integrator
-
-    real(wp),parameter :: alt0 = 100.0_wp  !! initial altitude for circular orbit (km)
-    real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
+    character(len=10) :: dt_max_str
+    character(len=10) :: deadband_alt_str
+    type(segment) :: seg  !! the integrator for a ballistic moon-centered trajectory
 
     ! initialize the segment:
-    call seg%initialize_seg(alt0,deadband_alt)
+    call seg%initialize_seg(alt0,deadband_alt,grav_n,grav_m)
 
     write(dt_max_str,'(I10)') int(dt_max); dt_max_str = adjustl(dt_max_str)
     write(deadband_alt_str,'(I10)') int(deadband_alt); deadband_alt_str = adjustl(deadband_alt_str)
@@ -68,32 +68,34 @@
     ! initialize the indep arrays:
     call size_arrays(lan_start,lan_stop,lan_step,inc_start,inc_stop,inc_step,x,y,z)
 
-    !allocate(x(lan_start:lan_stop))
-    !allocate(y(inc_start:inc_stop))
-    !allocate(z(lan_start:lan_stop, inc_start:inc_stop))
-
     do i_inc = 1, size(y)
 
-        inc0 = y(i_inc)
+        inc0 = y(i_inc) ! inclination
 
         do i_raan = 1, size(x)
 
-            ran0 = x(i_raan)
+            ran0 = x(i_raan) ! right ascension of ascending node
 
-            write(*,*) ''
-            write(*,*) '============'
-            write(*,*) 'inc, ran', inc0, ran0
-            write(*,*) '============'
-            write(*,*) ''
+            write(output_unit,'(A)') ''
+            write(output_unit,'(A)') '=============='
+            write(output_unit,'(A,1X,F12.6,1X,F12.6)') 'inc, ran:', inc0, ran0
+            write(output_unit,'(A)') ''
 
-            call seg%altitude_maintenance(et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
+            call seg%altitude_maintenance(et0,inc0,ran0,tru0,dt_max,n_dvs,dv_total,xf)
 
-            z(i_raan,i_inc) = dv_total * km2m ! in meters
+            z(i_raan,i_inc) = dv_total * km2m ! delta-v in m/s
+
+            write(output_unit,'(A)') ''
+            write(output_unit,'(A,I5)') 'n_dvs    = ', n_dvs
+            write(output_unit,'(A,F10.6)') 'dv_total = ', dv_total
+            write(output_unit,'(A)') '=============='
+            write(output_unit,'(A)') ''
 
         end do
 
     end do
 
+    ! create a contour plot for the delta-v:
     call plt%add_contour(x, y, z, label='contour', linestyle='-', &
                          linewidth=2, filled=.true., cmap='Blues',&
                          colorbar=.true.,istat=istat)
@@ -122,6 +124,11 @@
     end do
 
     contains
+!*****************************************************************************************
+
+!*****************************************************************************************
+!>
+!  Allocate the arrays.
 
     subroutine size_arrays(xstart, xstop, xstep, ystart, ystop, ystep, x, y, z)
 
@@ -129,7 +136,7 @@
 
     real(wp),intent(in) :: xstart, xstop, xstep, ystart, ystop, ystep
     real(wp),dimension(:),allocatable,intent(out) :: x,y
-    real(wp),dimension(:,:),allocatable,intent(out) :: z
+    real(wp),dimension(:,:),allocatable,intent(out) :: z  !! f(x,y)
 
     integer :: i,j,nx,ny
     real(wp) :: tmp
@@ -159,5 +166,8 @@
     z = 0.0_wp
 
     end subroutine size_arrays
+!*****************************************************************************************
 
+!*****************************************************************************************
     end program main
+!*****************************************************************************************

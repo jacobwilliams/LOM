@@ -4,8 +4,9 @@
 
     module altitude_maintenance_module
 
-    use ddeabm_module, only: ddeabm_class,ddeabm_with_event_class
     use fortran_astrodynamics_toolkit
+    use ddeabm_module,   only: ddeabm_class,ddeabm_with_event_class
+    use iso_fortran_env, only: error_unit,output_unit
 
     implicit none
 
@@ -16,7 +17,7 @@
 
     type,extends(ddeabm_with_event_class),public :: segment
 
-        !! the main class for integrating a LLO
+        !! the main class for integrating a low-lunar orbit.
 
         integer :: event = 0 !! event function to use:
                              !!
@@ -37,8 +38,8 @@
         integer  :: n_eoms = 6                  !! size of EOM derivative vector [x,y,z,vx,vy,vz]
         real(wp) :: integrator_tol = 1.0e-12_wp !! integrator tols
         integer  :: maxsteps = 1000000          !! integrator max steps
-        integer  :: grav_n = 20 !8              !! max grav degree
-        integer  :: grav_m = 20 !8              !! max grav order
+        integer  :: grav_n = 8                  !! max grav degree
+        integer  :: grav_m = 8                  !! max grav order
         real(wp) :: root_tol = 1.0e-6_wp        !! event tolerance for deadband (km)
 
         contains
@@ -55,13 +56,15 @@
 !>
 !  Initialize the segment for integration.
 
-    subroutine initialize_segment(me,alt0,deadband_alt)
+    subroutine initialize_segment(me,alt0,deadband_alt,grav_n,grav_m)
 
     implicit none
 
     class(segment),intent(inout) :: me
     real(wp),intent(in) :: alt0
     real(wp),intent(in) :: deadband_alt
+    integer,intent(in) :: grav_n
+    integer,intent(in) :: grav_m
 
     logical :: status_ok
 
@@ -72,19 +75,21 @@
 
     if (me%include_third_bodies) then
         ! set up the ephemeris:
-        write(*,*) 'loading ephemeris file: '//trim(ephemeris_file)
+        write(output_unit,'(A)') 'loading ephemeris file: '//trim(ephemeris_file)
         call me%eph%initialize(filename=ephemeris_file,status_ok=status_ok)
         if (.not. status_ok) error stop 'error initializing ephemeris'
     end if
 
     ! set up the force model [main body is moon]:
-    write(*,*) 'loading gravity file: '//trim(gravfile)
+    write(output_unit,'(A)') 'loading gravity file: '//trim(gravfile)
     call me%grav%initialize(gravfile,me%grav_n,me%grav_m,status_ok)
     if (.not. status_ok) error stop 'error initializing gravity model'
 
     ! set class variables for event function:
     me%nominal_altitude = alt0
     me%deadband = deadband_alt
+    me%grav_n = grav_n
+    me%grav_m = grav_m
 
     end subroutine initialize_segment
 !*****************************************************************************************
@@ -93,7 +98,7 @@
 !>
 !  Altitude maintenance for a circular lunar orbit - periapsis only control.
 
-    subroutine altitude_maintenance(seg,et0,inc0,ran0,dt_max,n_dvs,dv_total,xf)
+    subroutine altitude_maintenance(seg,et0,inc0,ran0,tru0,dt_max,n_dvs,dv_total,xf)
 
     implicit none
 
@@ -101,137 +106,113 @@
     real(wp),intent(in)               :: et0      !! initial ephemeris time (sec)
     real(wp),intent(in)               :: inc0     !! initial inclination - IAU_MOON of date (deg)
     real(wp),intent(in)               :: ran0     !! initial RAAN - IAU_MOON of date (deg)
+    real(wp),intent(in)               :: tru0     !! initial true anomaly - IAU_MOON of date (deg)
     real(wp),intent(in)               :: dt_max   !! how long to propagate (days)
     integer,intent(out)               :: n_dvs    !! number of DV maneuvers performed
     real(wp),intent(out)              :: dv_total !! total DV (km/s)
     real(wp),dimension(6),intent(out) :: xf       !! final state - inertial frame (km, km/s)
 
-    real(wp),dimension(3) :: r,v
+    real(wp),dimension(3) :: r !! position vector (km)
+    real(wp),dimension(3) :: v !! velocity vector (km/s)
     real(wp),dimension(3,3) :: rotmat  !! rotation matrix from ICRF to IAU_MOON
     real(wp),dimension(6) :: x  !! J2000-Moon state vector
     integer :: idid             !! integrator status flag
-    real(wp) :: sma             !! circular orbit semi-major axis [km]
+    real(wp) :: sma             !! circular orbit semi-major axis (km)
     real(wp) :: min_altitude    !! minimum altitude (km)
-    real(wp) :: dv              !! periapsis raise maneuver magnitude [km/s]
+    real(wp) :: dv              !! periapsis raise maneuver magnitude (km/s)
     real(wp) :: t               !! integration time (sec from et0)
     real(wp) :: tf              !! final integration time (sec from et0)
     real(wp) :: gval            !! event function value
-    real(wp) :: a, p, ecc, inc, raan, aop, tru, tru2
-    real(wp) :: rp1,ra1,vp1,va1,rp2,va2
+    real(wp) :: tru             !! true anomaly (deg)
 
+    ! initialize
     n_dvs = 0
     dv_total = zero
-    sma = seg%r_moon + seg%nominal_altitude  ! initial orbit sma (circular)
 
     ! get initial state in J2000 - Cartesian for integration
     ! note that inc,ran are in moon-centered-of-date-frame
-    call orbital_elements_to_rv(body_moon%mu,sma,zero,inc0*deg2rad,ran0*deg2rad,zero,zero,r,v)
+    ! [circular orbit so p=sma]
+    sma = seg%r_moon + seg%nominal_altitude  ! initial orbit sma (circular)
+    call orbital_elements_to_rv(body_moon%mu,sma,zero,&
+                                inc0*deg2rad,ran0*deg2rad,zero,tru0*deg2rad,r,v)
 
     ! rotate from body-fixed moon of date to j2000:
     rotmat = icrf_to_iau_moon(et0)   ! rotation matrix from inertial to body-fixed Moon frame
     x(1:3) = matmul(transpose(rotmat),r)
     x(4:6) = matmul(transpose(rotmat),v)  ! because using "of date" iau_moon frame
 
-    ! times are ephemeris time
+    ! times are relative to initial epoch (sec)
     seg%et_ref = et0
     t  = zero
     tf = dt_max*day2sec
-    seg%event = 1  ! propagate until the altitude is less than min_altitude
 
-    !write(*,*) 'starting integration loop...'
-    call seg%first_call()
+    ! propagate until the altitude is less than min_altitude
+    seg%event = 1
+
     ! main integration loop:
+    call seg%first_call()
     do
 
         call seg%integrate_to_event(t,x,tf,idid=idid,gval=gval)
 
         if (idid<0) then
 
-            write(*,'(A,*(I5/))') 'idid: ',idid
+            write(error_unit,'(A,*(I5/))') 'idid: ',idid
             error stop 'error in integrator'
 
         elseif (idid==2 .or. idid==3) then
-            ! if we reached the max time, then we are done, so exit
 
-            !write(*,*) 'done'
+            ! if we reached the max time, then we are done, so exit
             exit
 
         elseif (idid == 1000) then  ! a root has been found
 
-            !write(*,*) 'event found'
-
             select case (seg%event)
             case(1)
-                write(*,*) 'min altitude at ', t*sec2hr, 'hr'
+
                 ! if we hit the min altitude, then integrate to next apoapsis
                 ! and raise the periapsis:
                 seg%event = 2 ! propagate until apoapsis
                 call seg%first_call()  ! have to restart the integration
                                        ! since we just root solved
 
+                ! compute the maneuver here that will be performed
+                ! at next apoapsis to raise the periapsis, no matter what.
+                dv = periapsis_raise_maneuver(x,sma)
+
             case (2)
 
-                ! we have propagated to apoapsis, perform a maneuver to raise periapsis
+                ! we have propagated to periapsis or apoapsis, if at apoapsis,
+                ! perform a maneuver to raise periapsis
+                ! if at periapsis, just continue on.
 
-                ! compute current orbit elements:
-                call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
-                a = p / (one - ecc*ecc)
-                tru = tru*rad2deg ! convert to deg
-                if (tru<0.0_wp) tru = tru + 360.0_wp
-                call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
-                rp2 = sma ! desired periapsis radius for new orbit
+                ! compute current true anomaly:
+                tru = true_anomaly(x)
 
-                if (rp1>(rp2-seg%deadband)) then
-                    write(*,*) 'dv not necessary'
-                    ! in this case, the osculating periapsis radius has not
-                    ! violated the deadband altitude after all, so just
-                    ! continue without doing a maneuver.
+                if (tru<179.0_wp .or. tru>181.0_wp ) then
 
-                ! elseif (tru<179.0_wp .or. tru>181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
+                    ! we have to keep integrating, since we stopped at periapsis
+                    ! note: this is inefficient since we have to
+                    ! restart the integration. it would be better to prevent
+                    ! to root solver from stopping here.
+                    seg%event = 2  ! continue with mode 2
+                    call seg%first_call()  ! have to restart integration
+                    cycle
 
-                !     write(*,*)  'oops stopped at periapsis : TRU=',tru, ' : t=', t*sec2hr, 'gval=',gval
+                else ! we are at apoapsis
 
-                !     ! we have to keep integrating, we stopped at periapsis ...
-                !     seg%event = 2  ! keep this...
-                !     call seg%first_call()  ! have to restart integration...
-                !     cycle
-
-                !     !... something wrong here... it's not working... getting stuck...
-
-                ! below: if we stopped at periapsis, just reset and continue with event mode 1
-                ! [not efficient, since we have to restart integration]
-                !
-                elseif (tru>=179.0_wp .and. tru<=181.0_wp ) then  ! HACK - IGNORE PERIAPSIS ROOTS
-                    !write(*,*) 'dv to raise rp from ', rp1, ' at ', t*sec2day, 'days'
-
-                    ! apoapsis velocity to raise periapsis radius to rp2
-                    va2 = sqrt( two * body_moon%mu * ( one/ra1 - one/(rp2+ra1) ) )
-
-                    ! delta-v to raise periapsis back to initial sma
-                    dv = va2 - va1
-
+                    ! perform the maneuver we computed when
+                    ! the min altitude was triggered
                     ! apply the maneuver along the current apoapsis velocity vector:
                     x(4:6) = x(4:6) + dv * unit(x(4:6))
-
-                    ! ... check results:
-                    call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru2)
-                    a = p / (one - ecc*ecc)
-                    call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
-                    ! write(*,*) ''
-                    ! write(*,*) '-----'
-                    ! write(*,*) 'after dv'
-                    ! write(*,*) 'rp = ',rp1
-                    ! write(*,*) 'ra = ',ra1
-                    ! write(*,*) '-----'
-                    ! write(*,*) ''
 
                     ! keep track of totals:
                     n_dvs = n_dvs + 1
                     dv_total = dv_total + dv
 
-                    write(*,*) 'apoapsis at ', t*sec2hr, 'hr', ' : TRU = ', tru, ' : dv = ', dv
-
-                    !write(*,*) 'DV', n_dvs, dv
+                    write(output_unit,'(*(A,F12.6))') 'maneuver at ', t*sec2hr, &
+                                                      ' hr : TRU = ', tru, &
+                                                      ' : dv = ', dv
 
                 end if
 
@@ -245,7 +226,7 @@
             end select
 
         else
-            write(*,*) 'unknown exit code from integrator: idid=',idid
+            write(error_unit,'(A,I5)') 'unknown exit code from integrator: idid=',idid
             error stop 'error in altitude_maintenance'
         end if
 
@@ -254,15 +235,90 @@
     ! final state:
     xf = x
 
-    write(*,*) ''
-    write(*,*) '=============='
-    write(*,*) 't        = ', t*sec2day, 'days'
-    write(*,*) 'n_dvs    = ', n_dvs
-    write(*,*) 'dv_total = ', dv_total
-    write(*,*) '=============='
-    write(*,*) ''
-
     end subroutine altitude_maintenance
+!*****************************************************************************************
+
+!*****************************************************************************************
+!>
+!  Compute true anomaly [0, 360] deg.
+
+    pure function true_anomaly(rv) result(tru)
+
+    implicit none
+
+    real(wp),dimension(6),intent(in) :: rv !! [position,velocity] vector
+    real(wp) :: tru !! true anomaly (deg)
+
+    real(wp),dimension(3) :: r !! position vector
+    real(wp),dimension(3) :: v !! velocity vector
+    real(wp) :: p,ecc,inc,raan,aop !! orbital elements
+
+    r = rv(1:3)
+    v = rv(4:6)
+
+    call rv_to_orbital_elements(body_moon%mu,r,v,p,ecc,inc,raan,aop,tru)
+
+    tru = tru*rad2deg ! convert to deg
+    if (tru<zero) tru = tru + 360.0_wp ! wrap from 0 to 369
+
+    end function true_anomaly
+!*****************************************************************************************
+
+!*****************************************************************************************
+!>
+!  Compute the maneuver at apoapsis to raise periapsis to the specified value.
+
+    pure function periapsis_raise_maneuver(rv,target_rp) result(dv)
+
+    implicit none
+
+    real(wp),dimension(6),intent(in) :: rv !! [position,velocity] vector
+    real(wp),intent(in) :: target_rp  !! the rp value to target
+    real(wp) :: dv !! the maneuver to perform at apoapsis to target `target_rp`
+
+    real(wp),dimension(3) :: r !! position vector
+    real(wp),dimension(3) :: v !! velocity vector
+    real(wp) :: a,p,ecc,inc,raan,aop,tru !! orbital elements
+    real(wp) :: rp1,ra1,vp1,va1,va2  !! periapsis/apoapsis pos/vel magnitudes
+
+    r = rv(1:3)
+    v = rv(4:6)
+
+    call rv_to_orbital_elements(body_moon%mu,r,v,p,ecc,inc,raan,aop,tru)
+    a = p / (one - ecc*ecc) ! compute semi-major axis
+    call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
+
+    ! apoapsis velocity for periapsis radius of rp2
+    va2 = sqrt( two * body_moon%mu * ( one/ra1 - one/(target_rp+ra1) ) )
+
+    ! delta-v to raise periapsis back to target rp
+    dv = va2 - va1
+
+    end function periapsis_raise_maneuver
+!*****************************************************************************************
+
+!*****************************************************************************************
+!>
+!  Compute radial velocity magnitude \( \dot{r} \)
+
+    pure function rdot(rv) result(rd)
+
+    implicit none
+
+    real(wp),dimension(6),intent(in) :: rv !! [position,velocity] vector
+    real(wp) :: rd !! \( \dot{r} \)
+
+    real(wp),dimension(3) :: r !! position vector
+    real(wp),dimension(3) :: v !! velocity vector
+    real(wp) :: rmag !! position vector magnitude
+
+    r = rv(1:3)
+    v = rv(4:6)
+    rmag = norm2(r)
+
+    rd = dot_product(r,v) / rmag
+
+    end function rdot
 !*****************************************************************************************
 
 !*****************************************************************************************
@@ -281,30 +337,31 @@
     real(wp),intent(out)             :: g  !! event function
 
     real(wp) :: alt  !! altitude (km)
-    real(wp) :: p, ecc, inc, raan, aop, tru
 
     select type (me)
     class is (segment)
 
         select case (me%event)
         case (1)
-            ! offset from deadband altitude
+
+            ! g is offset from deadband altitude
             alt = norm2(x(1:3)) - me%r_moon
             g = alt - (me%nominal_altitude - me%deadband)
+
         case (2)
-            ! offset from a true anomaly of 180 (apoapsis)
 
-            !... this is also catching periapsis ....  how to get only apoapsis ?????
-            ! ... have to update ddeabm to allow for user-specified bracket function
-            !     so we can test to see which one it's near ...
+            ! g is rdot, which is zero and periapsis
+            ! and apoapsis of an ellipse:
+            g = rdot(x(1:6))
 
-            call rv_to_orbital_elements(body_moon%mu,x(1:3),x(4:6),p,ecc,inc,raan,aop,tru)
-            if (tru<zero) tru = tru + twopi  ! from 0 -> 360
-            g = tru - pi
+            ! TODO: figure out how to get it to ignore periapsis roots
+            ! [maybe need to update DDEABM so we have more control
+            ! over which roots it stops at]
 
         case default
             error stop 'invalid event value in event_func'
         end select
+
     class default
         error stop 'invalid class in event_func'
     end select
@@ -333,7 +390,7 @@
     real(wp),dimension(3) :: a_sun
     real(wp),dimension(3) :: a_third_body
     real(wp) :: et !! ephemeris time of `t`
-    logical :: status_ok
+    logical :: status_ok  !! ephemeris status flag
 
     select type (me)
 
