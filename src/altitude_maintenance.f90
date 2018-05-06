@@ -295,7 +295,7 @@
     call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
 
     ! apoapsis velocity for periapsis radius of target_rp
-    va2 = sqrt( two * body_moon%mu * ( one/ra1 - one/(target_rp+ra1) ) )
+    va2 = sqrt( two * body_moon%mu * target_rp/(ra1*(target_rp+ra1)) )
 
     ! delta-v to raise periapsis back to target rp
     dv = va2 - va1
