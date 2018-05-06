@@ -17,24 +17,26 @@
     real(wp),parameter :: tru0 = 0.0_wp          !! initial true anomaly (deg)
     real(wp),parameter :: alt0 = 100.0_wp        !! initial altitude for circular orbit (km)
     real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
-    integer,parameter  :: grav_n = 8 !20         !! max grav degree
-    integer,parameter  :: grav_m = 8 !20         !! max grav order
 
     ! full data set:
-    ! real(wp),parameter :: inc_start = 80.0_wp
-    ! real(wp),parameter :: inc_stop  = 180.0_wp
-    ! real(wp),parameter :: inc_step  = 2.0_wp
-    ! real(wp),parameter :: lan_start = -180.0_wp
-    ! real(wp),parameter :: lan_stop  = 180.0_wp
-    ! real(wp),parameter :: lan_step  = 4.0_wp
-
-    ! test case:
     real(wp),parameter :: inc_start = 80.0_wp
     real(wp),parameter :: inc_stop  = 180.0_wp
-    real(wp),parameter :: inc_step  = 10.0_wp
+    real(wp),parameter :: inc_step  = 2.0_wp
     real(wp),parameter :: lan_start = -180.0_wp
     real(wp),parameter :: lan_stop  = 180.0_wp
-    real(wp),parameter :: lan_step  = 20.0_wp
+    real(wp),parameter :: lan_step  = 4.0_wp
+    integer,parameter  :: grav_n = 20         !! max grav degree
+    integer,parameter  :: grav_m = 20         !! max grav order
+
+    ! test case:
+    ! real(wp),parameter :: inc_start = 80.0_wp
+    ! real(wp),parameter :: inc_stop  = 180.0_wp
+    ! real(wp),parameter :: inc_step  = 10.0_wp
+    ! real(wp),parameter :: lan_start = -180.0_wp
+    ! real(wp),parameter :: lan_stop  = 180.0_wp
+    ! real(wp),parameter :: lan_step  = 20.0_wp
+    ! integer,parameter  :: grav_n = 8        !! max grav degree
+    ! integer,parameter  :: grav_m = 8        !! max grav order
 
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)

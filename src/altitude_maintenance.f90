@@ -80,16 +80,16 @@
         if (.not. status_ok) error stop 'error initializing ephemeris'
     end if
 
-    ! set up the force model [main body is moon]:
-    write(output_unit,'(A)') 'loading gravity file: '//trim(gravfile)
-    call me%grav%initialize(gravfile,me%grav_n,me%grav_m,status_ok)
-    if (.not. status_ok) error stop 'error initializing gravity model'
-
     ! set class variables for event function:
     me%nominal_altitude = alt0
     me%deadband = deadband_alt
     me%grav_n = grav_n
     me%grav_m = grav_m
+
+    ! set up the force model [main body is moon]:
+    write(output_unit,'(A)') 'loading gravity file: '//trim(gravfile)
+    call me%grav%initialize(gravfile,me%grav_n,me%grav_m,status_ok)
+    if (.not. status_ok) error stop 'error initializing gravity model'
 
     end subroutine initialize_segment
 !*****************************************************************************************
