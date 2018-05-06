@@ -288,7 +288,7 @@
     a = p / (one - ecc*ecc) ! compute semi-major axis
     call periapsis_apoapsis(body_moon%mu,a,ecc,rp1,ra1,vp1,va1)
 
-    ! apoapsis velocity for periapsis radius of rp2
+    ! apoapsis velocity for periapsis radius of target_rp
     va2 = sqrt( two * body_moon%mu * ( one/ra1 - one/(target_rp+ra1) ) )
 
     ! delta-v to raise periapsis back to target rp
