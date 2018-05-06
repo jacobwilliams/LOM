@@ -1,4 +1,10 @@
-LOM tests
+### Description
+
+Example algorithm for low-lunar orbit maintenance. Requires:
+
+* [Fortran Astrodynamics Toolkit](https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit)
+* [DDEABM](https://github.com/jacobwilliams/ddeabm)
+* [pyplot-fortran](https://github.com/jacobwilliams/pyplot-fortran)
 
 ### Building
 

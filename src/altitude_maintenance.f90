@@ -1,6 +1,12 @@
 !*****************************************************************************************
 !>
 !  Altitude maintenance for low lunar orbits.
+!
+!  Assumptions:
+!
+!  * Circular low-lunar orbit.
+!  * Only periapsis altitude is controlled (all other elements float)
+!  * The low-fidelity IAU_MOON frame is used for the elements and gravity model.
 
     module altitude_maintenance_module
 
