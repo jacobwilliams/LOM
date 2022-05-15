@@ -19,11 +19,11 @@ fpm run -- configs/quick.json
 Where the command line argument is the config file that sets the run settings. See the files in the `configs` directory for examples.
 
 The program has the following dependencies which are automatically downloaded by FPM:
-* [Fortran Astrodynamics Toolkit](https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit)
-* [ddeabm](https://github.com/jacobwilliams/ddeabm)
-* [pyplot-fortran](https://github.com/jacobwilliams/pyplot-fortran)
-* [json-fortran](https://github.com/jacobwilliams/json-fortran)
-* [argv-fortran](https://github.com/jacobwilliams/argv-fortran)
+* [Fortran Astrodynamics Toolkit](https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit) -- For basic orbital mechanics computations.
+* [ddeabm](https://github.com/jacobwilliams/ddeabm) -- For numerical propagation of the trajectory.
+* [pyplot-fortran](https://github.com/jacobwilliams/pyplot-fortran) -- For plotting of the results.
+* [json-fortran](https://github.com/jacobwilliams/json-fortran) -- For reading the JSON config input file.
+* [argv-fortran](https://github.com/jacobwilliams/argv-fortran) -- For getting command line arguments.
 
 ## Documentation
 
