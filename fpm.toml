@@ -1,6 +1,6 @@
 name = "lom"
 author = "Jacob Williams"
-copyright  = "Copyright (c) 2022, Jacob Williams"
+copyright  = "Copyright (c) 2018-2022, Jacob Williams"
 license = "BSD-3"
 description = "Lunar Orbit Maintenance"
 homepage = "https://github.com/jacobwilliams/LOM"
