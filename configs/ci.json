@@ -1,0 +1,16 @@
+// Very quick test to be used in the CI.
+{
+    "dt_max"       : 10.0,           // how long to propagate (days)
+    "et0"          : 0.0,            // initial ephemeris time (sec) (only matters if including Earth/Sun perturbations)
+    "tru0"         : 0.0,            // initial true anomaly (deg)
+    "alt0"         : 100.0,          // initial altitude for circular orbit (km)
+    "deadband_alt" : 10.0,           // altitude below initial to trigger periapsis raise (km)
+    "inc_start"    : 80.0,
+    "inc_stop"     : 83.0,
+    "inc_step"     : 1.0,
+    "lan_start"    : -180.0,
+    "lan_stop"     : -170.0,
+    "lan_step"     : 10.0,
+    "grav_n"       : 8,              // max grav degree
+    "grav_m"       : 8               // max grav order
+}

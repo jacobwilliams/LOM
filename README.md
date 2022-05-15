@@ -2,6 +2,12 @@
 
 Example algorithm for low-lunar orbit maintenance.
 
+### Status
+[![GitHub release](https://img.shields.io/github/release/jacobwilliams/LOM.svg)](https://github.com/jacobwilliams/LOM/releases/latest)
+[![CI Status](https://github.com/jacobwilliams/LOM/actions/workflows/CI.yml/badge.svg)](https://github.com/jacobwilliams/LOM/actions)
+[![codecov](https://codecov.io/gh/jacobwilliams/LOM/branch/master/graph/badge.svg)](https://codecov.io/gh/jacobwilliams/LOM)
+[![last-commit](https://img.shields.io/github/last-commit/jacobwilliams/LOM)](https://github.com/jacobwilliams/LOM/commits/master)
+
 ### Building
 
 The program can be built and with the [Fortran Package Manager](https://github.com/fortran-lang/fpm) using the provided `fpm.toml` file like so:
