@@ -235,18 +235,18 @@ on one line [default is False]</p></td>
 <polygon fill="none" stroke="black" points="99,-66 0,-66 0,-42 99,-42 99,-66"/>
 <text text-anchor="middle" x="49.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50">json_value_print</text>
 </g>
-<!-- proc~integer_to_string~2 -->
+<!-- proc~real_to_string~2 -->
 <g id="proc~~json_value_print~~CallsGraph_node2" class="node">
-<title>proc~integer_to_string~2</title>
-<g id="a_proc~~json_value_print~~CallsGraph_node2"><a xlink:href=".././proc/integer_to_string~2.html" xlink:title="integer_to_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="237,-108 135,-108 135,-84 237,-84 237,-108"/>
-<text text-anchor="middle" x="186" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">integer_to_string</text>
+<title>proc~real_to_string~2</title>
+<g id="a_proc~~json_value_print~~CallsGraph_node2"><a xlink:href=".././proc/real_to_string~2.html" xlink:title="real_to_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="228,-108 144,-108 144,-84 228,-84 228,-108"/>
+<text text-anchor="middle" x="186" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">real_to_string</text>
 </a>
 </g>
 </g>
-<!-- proc~json_value_print&#45;&gt;proc~integer_to_string~2 -->
+<!-- proc~json_value_print&#45;&gt;proc~real_to_string~2 -->
 <g id="proc~~json_value_print~~CallsGraph_edge1" class="edge">
-<title>proc~json_value_print&#45;&gt;proc~integer_to_string~2</title>
+<title>proc~json_value_print&#45;&gt;proc~real_to_string~2</title>
 <path fill="none" stroke="#000000" d="M89.04,-66.04C103.96,-70.69 121.19,-76.07 136.9,-80.98"/>
 <polygon fill="#000000" stroke="#000000" points="135.86,-84.32 146.45,-83.96 137.95,-77.64 135.86,-84.32"/>
 </g>
@@ -260,25 +260,40 @@ on one line [default is False]</p></td>
 </g>
 </g>
 <!-- proc~json_value_print&#45;&gt;proc~escape_string -->
-<g id="proc~~json_value_print~~CallsGraph_edge3" class="edge">
+<g id="proc~~json_value_print~~CallsGraph_edge2" class="edge">
 <title>proc~json_value_print&#45;&gt;proc~escape_string</title>
 <path fill="none" stroke="#000000" d="M99.06,-54C109.89,-54 121.43,-54 132.42,-54"/>
 <polygon fill="#000000" stroke="#000000" points="132.74,-57.5 142.74,-54 132.74,-50.5 132.74,-57.5"/>
 </g>
-<!-- proc~real_to_string~2 -->
+<!-- proc~integer_to_string~2 -->
 <g id="proc~~json_value_print~~CallsGraph_node4" class="node">
-<title>proc~real_to_string~2</title>
-<g id="a_proc~~json_value_print~~CallsGraph_node4"><a xlink:href=".././proc/real_to_string~2.html" xlink:title="real_to_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="228,-24 144,-24 144,0 228,0 228,-24"/>
-<text text-anchor="middle" x="186" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">real_to_string</text>
+<title>proc~integer_to_string~2</title>
+<g id="a_proc~~json_value_print~~CallsGraph_node4"><a xlink:href=".././proc/integer_to_string~2.html" xlink:title="integer_to_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="237,-24 135,-24 135,0 237,0 237,-24"/>
+<text text-anchor="middle" x="186" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">integer_to_string</text>
 </a>
 </g>
 </g>
-<!-- proc~json_value_print&#45;&gt;proc~real_to_string~2 -->
-<g id="proc~~json_value_print~~CallsGraph_edge2" class="edge">
-<title>proc~json_value_print&#45;&gt;proc~real_to_string~2</title>
+<!-- proc~json_value_print&#45;&gt;proc~integer_to_string~2 -->
+<g id="proc~~json_value_print~~CallsGraph_edge3" class="edge">
+<title>proc~json_value_print&#45;&gt;proc~integer_to_string~2</title>
 <path fill="none" stroke="#000000" d="M89.04,-41.96C103.96,-37.31 121.19,-31.93 136.9,-27.02"/>
 <polygon fill="#000000" stroke="#000000" points="137.95,-30.36 146.45,-24.04 135.86,-23.68 137.95,-30.36"/>
+</g>
+<!-- proc~compact_real_string -->
+<g id="proc~~json_value_print~~CallsGraph_node6" class="node">
+<title>proc~compact_real_string</title>
+<g id="a_proc~~json_value_print~~CallsGraph_node6"><a xlink:href=".././proc/compact_real_string.html" xlink:title="compact_real_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="393,-108 273,-108 273,-84 393,-84 393,-108"/>
+<text text-anchor="middle" x="333" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">compact_real_string</text>
+</a>
+</g>
+</g>
+<!-- proc~real_to_string~2&#45;&gt;proc~compact_real_string -->
+<g id="proc~~json_value_print~~CallsGraph_edge4" class="edge">
+<title>proc~real_to_string~2&#45;&gt;proc~compact_real_string</title>
+<path fill="none" stroke="#000000" d="M228.16,-96C238.91,-96 250.8,-96 262.58,-96"/>
+<polygon fill="#000000" stroke="#000000" points="262.87,-99.5 272.87,-96 262.87,-92.5 262.87,-99.5"/>
 </g>
 <!-- proc~valid_json_hex -->
 <g id="proc~~json_value_print~~CallsGraph_node5" class="node">
@@ -290,25 +305,10 @@ on one line [default is False]</p></td>
 </g>
 </g>
 <!-- proc~escape_string&#45;&gt;proc~valid_json_hex -->
-<g id="proc~~json_value_print~~CallsGraph_edge4" class="edge">
+<g id="proc~~json_value_print~~CallsGraph_edge5" class="edge">
 <title>proc~escape_string&#45;&gt;proc~valid_json_hex</title>
 <path fill="none" stroke="#000000" d="M229.33,-54C244.55,-54 261.94,-54 278.02,-54"/>
 <polygon fill="#000000" stroke="#000000" points="278.36,-57.5 288.36,-54 278.36,-50.5 278.36,-57.5"/>
-</g>
-<!-- proc~compact_real_string -->
-<g id="proc~~json_value_print~~CallsGraph_node6" class="node">
-<title>proc~compact_real_string</title>
-<g id="a_proc~~json_value_print~~CallsGraph_node6"><a xlink:href=".././proc/compact_real_string.html" xlink:title="compact_real_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="393,-24 273,-24 273,0 393,0 393,-24"/>
-<text text-anchor="middle" x="333" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">compact_real_string</text>
-</a>
-</g>
-</g>
-<!-- proc~real_to_string~2&#45;&gt;proc~compact_real_string -->
-<g id="proc~~json_value_print~~CallsGraph_edge5" class="edge">
-<title>proc~real_to_string~2&#45;&gt;proc~compact_real_string</title>
-<path fill="none" stroke="#000000" d="M228.16,-12C238.91,-12 250.8,-12 262.58,-12"/>
-<polygon fill="#000000" stroke="#000000" points="262.87,-15.5 272.87,-12 262.87,-8.5 262.87,-15.5"/>
 </g>
 </g>
 </svg>

@@ -180,18 +180,18 @@
 <polygon fill="none" stroke="black" points="92,-66 0,-66 0,-42 92,-42 92,-66"/>
 <text text-anchor="middle" x="46" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50">json_get_string</text>
 </g>
-<!-- proc~integer_to_string~2 -->
+<!-- proc~real_to_string~2 -->
 <g id="proc~~json_get_string~~CallsGraph_node2" class="node">
-<title>proc~integer_to_string~2</title>
-<g id="a_proc~~json_get_string~~CallsGraph_node2"><a xlink:href=".././proc/integer_to_string~2.html" xlink:title="integer_to_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="230,-108 128,-108 128,-84 230,-84 230,-108"/>
-<text text-anchor="middle" x="179" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">integer_to_string</text>
+<title>proc~real_to_string~2</title>
+<g id="a_proc~~json_get_string~~CallsGraph_node2"><a xlink:href=".././proc/real_to_string~2.html" xlink:title="real_to_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="221,-108 137,-108 137,-84 221,-84 221,-108"/>
+<text text-anchor="middle" x="179" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">real_to_string</text>
 </a>
 </g>
 </g>
-<!-- proc~json_get_string&#45;&gt;proc~integer_to_string~2 -->
+<!-- proc~json_get_string&#45;&gt;proc~real_to_string~2 -->
 <g id="proc~~json_get_string~~CallsGraph_edge1" class="edge">
-<title>proc~json_get_string&#45;&gt;proc~integer_to_string~2</title>
+<title>proc~json_get_string&#45;&gt;proc~real_to_string~2</title>
 <path fill="none" stroke="#000000" d="M84.54,-66.04C98.93,-70.65 115.53,-75.97 130.72,-80.84"/>
 <polygon fill="#000000" stroke="#000000" points="129.86,-84.24 140.46,-83.96 132,-77.58 129.86,-84.24"/>
 </g>
@@ -205,25 +205,40 @@
 </g>
 </g>
 <!-- proc~json_get_string&#45;&gt;proc~escape_string -->
-<g id="proc~~json_get_string~~CallsGraph_edge3" class="edge">
+<g id="proc~~json_get_string~~CallsGraph_edge2" class="edge">
 <title>proc~json_get_string&#45;&gt;proc~escape_string</title>
 <path fill="none" stroke="#000000" d="M92.08,-54C102.96,-54 114.68,-54 125.85,-54"/>
 <polygon fill="#000000" stroke="#000000" points="125.92,-57.5 135.92,-54 125.92,-50.5 125.92,-57.5"/>
 </g>
-<!-- proc~real_to_string~2 -->
+<!-- proc~integer_to_string~2 -->
 <g id="proc~~json_get_string~~CallsGraph_node4" class="node">
-<title>proc~real_to_string~2</title>
-<g id="a_proc~~json_get_string~~CallsGraph_node4"><a xlink:href=".././proc/real_to_string~2.html" xlink:title="real_to_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="221,-24 137,-24 137,0 221,0 221,-24"/>
-<text text-anchor="middle" x="179" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">real_to_string</text>
+<title>proc~integer_to_string~2</title>
+<g id="a_proc~~json_get_string~~CallsGraph_node4"><a xlink:href=".././proc/integer_to_string~2.html" xlink:title="integer_to_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="230,-24 128,-24 128,0 230,0 230,-24"/>
+<text text-anchor="middle" x="179" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">integer_to_string</text>
 </a>
 </g>
 </g>
-<!-- proc~json_get_string&#45;&gt;proc~real_to_string~2 -->
-<g id="proc~~json_get_string~~CallsGraph_edge2" class="edge">
-<title>proc~json_get_string&#45;&gt;proc~real_to_string~2</title>
+<!-- proc~json_get_string&#45;&gt;proc~integer_to_string~2 -->
+<g id="proc~~json_get_string~~CallsGraph_edge3" class="edge">
+<title>proc~json_get_string&#45;&gt;proc~integer_to_string~2</title>
 <path fill="none" stroke="#000000" d="M84.54,-41.96C98.93,-37.35 115.53,-32.03 130.72,-27.16"/>
 <polygon fill="#000000" stroke="#000000" points="132,-30.42 140.46,-24.04 129.86,-23.76 132,-30.42"/>
+</g>
+<!-- proc~compact_real_string -->
+<g id="proc~~json_get_string~~CallsGraph_node6" class="node">
+<title>proc~compact_real_string</title>
+<g id="a_proc~~json_get_string~~CallsGraph_node6"><a xlink:href=".././proc/compact_real_string.html" xlink:title="compact_real_string">
+<polygon fill="#d9534f" stroke="#d9534f" points="386,-108 266,-108 266,-84 386,-84 386,-108"/>
+<text text-anchor="middle" x="326" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">compact_real_string</text>
+</a>
+</g>
+</g>
+<!-- proc~real_to_string~2&#45;&gt;proc~compact_real_string -->
+<g id="proc~~json_get_string~~CallsGraph_edge4" class="edge">
+<title>proc~real_to_string~2&#45;&gt;proc~compact_real_string</title>
+<path fill="none" stroke="#000000" d="M221.16,-96C231.91,-96 243.8,-96 255.58,-96"/>
+<polygon fill="#000000" stroke="#000000" points="255.87,-99.5 265.87,-96 255.87,-92.5 255.87,-99.5"/>
 </g>
 <!-- proc~valid_json_hex -->
 <g id="proc~~json_get_string~~CallsGraph_node5" class="node">
@@ -235,25 +250,10 @@
 </g>
 </g>
 <!-- proc~escape_string&#45;&gt;proc~valid_json_hex -->
-<g id="proc~~json_get_string~~CallsGraph_edge4" class="edge">
+<g id="proc~~json_get_string~~CallsGraph_edge5" class="edge">
 <title>proc~escape_string&#45;&gt;proc~valid_json_hex</title>
 <path fill="none" stroke="#000000" d="M222.33,-54C237.55,-54 254.94,-54 271.02,-54"/>
 <polygon fill="#000000" stroke="#000000" points="271.36,-57.5 281.36,-54 271.36,-50.5 271.36,-57.5"/>
-</g>
-<!-- proc~compact_real_string -->
-<g id="proc~~json_get_string~~CallsGraph_node6" class="node">
-<title>proc~compact_real_string</title>
-<g id="a_proc~~json_get_string~~CallsGraph_node6"><a xlink:href=".././proc/compact_real_string.html" xlink:title="compact_real_string">
-<polygon fill="#d9534f" stroke="#d9534f" points="386,-24 266,-24 266,0 386,0 386,-24"/>
-<text text-anchor="middle" x="326" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">compact_real_string</text>
-</a>
-</g>
-</g>
-<!-- proc~real_to_string~2&#45;&gt;proc~compact_real_string -->
-<g id="proc~~json_get_string~~CallsGraph_edge5" class="edge">
-<title>proc~real_to_string~2&#45;&gt;proc~compact_real_string</title>
-<path fill="none" stroke="#000000" d="M221.16,-12C231.91,-12 243.8,-12 255.58,-12"/>
-<polygon fill="#000000" stroke="#000000" points="255.87,-15.5 265.87,-12 255.87,-8.5 255.87,-15.5"/>
 </g>
 </g>
 </svg>
