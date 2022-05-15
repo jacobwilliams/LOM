@@ -6,40 +6,26 @@
 
     use altitude_maintenance_module,    only: segment
     use fortran_astrodynamics_toolkit,  only: km2m
-    use pyplot_module,                  only : pyplot
-    use iso_fortran_env, only: error_unit,output_unit, wp => real64
+    use pyplot_module,                  only: pyplot
+    use iso_fortran_env,                only: error_unit,output_unit, wp => real64
 
     implicit none
 
-    real(wp),parameter :: dt_max = 10.0_wp       !! how long to propagate (days)
-    real(wp),parameter :: et0 = 0.0_wp           !! initial ephemeris time (sec)
-                                                 !! (only matters if including Earth/Sun perturbations)
-    real(wp),parameter :: tru0 = 0.0_wp          !! initial true anomaly (deg)
-    real(wp),parameter :: alt0 = 100.0_wp        !! initial altitude for circular orbit (km)
-    real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
-
-    !... note: these should be command line arguments,
-    !          or input from a config file
-
-    ! full data set:
-    ! real(wp),parameter :: inc_start = 80.0_wp
-    ! real(wp),parameter :: inc_stop  = 180.0_wp
-    ! real(wp),parameter :: inc_step  = 2.0_wp
-    ! real(wp),parameter :: lan_start = -180.0_wp
-    ! real(wp),parameter :: lan_stop  = 180.0_wp
-    ! real(wp),parameter :: lan_step  = 4.0_wp
-    ! integer,parameter  :: grav_n = 20         !! max grav degree
-    ! integer,parameter  :: grav_m = 20         !! max grav order
-
-    ! test case:
-    real(wp),parameter :: inc_start = 80.0_wp
-    real(wp),parameter :: inc_stop  = 180.0_wp
-    real(wp),parameter :: inc_step  = 20.0_wp
-    real(wp),parameter :: lan_start = -180.0_wp
-    real(wp),parameter :: lan_stop  = 180.0_wp
-    real(wp),parameter :: lan_step  = 30.0_wp
-    integer,parameter  :: grav_n = 8        !! max grav degree
-    integer,parameter  :: grav_m = 8        !! max grav order
+    ! run variables, populated by the config file:
+    real(wp) :: dt_max        !! how long to propagate (days)
+    real(wp) :: et0           !! initial ephemeris time (sec)
+                              !! (only matters if including Earth/Sun perturbations)
+    real(wp) :: tru0          !! initial true anomaly (deg)
+    real(wp) :: alt0          !! initial altitude for circular orbit (km)
+    real(wp) :: deadband_alt  !! altitude below initial to trigger periapsis raise (km)
+    real(wp) :: inc_start     !! inc/lan grid
+    real(wp) :: inc_stop
+    real(wp) :: inc_step
+    real(wp) :: lan_start
+    real(wp) :: lan_stop
+    real(wp) :: lan_step
+    integer  :: grav_n     !! max grav degree
+    integer  :: grav_m     !! max grav order
 
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
@@ -57,6 +43,9 @@
     character(len=10) :: dt_max_str
     character(len=10) :: deadband_alt_str
     type(segment) :: seg  !! the integrator for a ballistic moon-centered trajectory
+
+    ! populate the run variables:
+    call read_config_file()
 
     ! initialize the segment:
     call seg%initialize_seg(alt0,deadband_alt,grav_n,grav_m)
@@ -129,6 +118,58 @@
     end do
 
     contains
+!*****************************************************************************************
+
+!*****************************************************************************************
+!>
+!  Read the config file and populate the global variables.
+
+    subroutine read_config_file()
+
+    use argv_module, only: argv
+    use json_module, only: json_file
+
+    implicit none
+
+    character(len=:),allocatable :: filename
+    type(json_file) :: json
+    logical :: status_ok, found
+    character(len=:),allocatable :: error_msg
+
+    filename = argv(1) ! get the first argument
+    if (filename == '') then
+        error stop 'The first command line arg should be the config file name'
+    else
+
+        write(*,'(A)') 'Reading config file: '//trim(filename)
+
+        call json%initialize() ! no optional args for now
+        call json%load(filename)
+        if (json%failed()) then
+            call json%check_for_errors(error_msg=error_msg)
+            error stop error_msg
+        else
+            ! populate the run variables:
+            call json%get('dt_max',       dt_max,       found); if (.not. found) error stop 'dt_max not found in config file.'
+            call json%get('et0',          et0,          found); if (.not. found) error stop 'et0 not found in config file.'
+            call json%get('tru0',         tru0,         found); if (.not. found) error stop 'tru0 not found in config file.'
+            call json%get('alt0',         alt0,         found); if (.not. found) error stop 'alt0 not found in config file.'
+            call json%get('deadband_alt', deadband_alt, found); if (.not. found) error stop 'deadband_alt not found in config file.'
+            call json%get('inc_start',    inc_start,    found); if (.not. found) error stop 'inc_start not found in config file.'
+            call json%get('inc_stop',     inc_stop,     found); if (.not. found) error stop 'inc_stop not found in config file.'
+            call json%get('inc_step',     inc_step,     found); if (.not. found) error stop 'inc_step not found in config file.'
+            call json%get('lan_start',    lan_start,    found); if (.not. found) error stop 'lan_start not found in config file.'
+            call json%get('lan_stop',     lan_stop,     found); if (.not. found) error stop 'lan_stop not found in config file.'
+            call json%get('lan_step',     lan_step,     found); if (.not. found) error stop 'lan_step not found in config file.'
+            call json%get('grav_n',       grav_n,       found); if (.not. found) error stop 'grav_n not found in config file.'
+            call json%get('grav_m',       grav_m,       found); if (.not. found) error stop 'grav_m not found in config file.'
+        end if
+
+        call json%destroy()
+
+    end if
+
+    end subroutine read_config_file
 !*****************************************************************************************
 
 !*****************************************************************************************

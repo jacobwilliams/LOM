@@ -15,3 +15,5 @@ auto-tests = false
 ddeabm = { git="https://github.com/jacobwilliams/ddeabm.git", tag = "3.0.0" }
 fortran-astrodynamics-toolkit = { git="https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit.git", tag = "0.3" }
 pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git", tag = "3.2.0" }
+json-fortran = { git="https://github.com/jacobwilliams/json-fortran.git", tag = "8.3.0" }
+argv-fortran = { git="https://github.com/jacobwilliams/argv-fortran.git", tag = "1.0.0" }
