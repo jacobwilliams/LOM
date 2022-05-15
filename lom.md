@@ -1,6 +1,6 @@
 project: lom
-project_dir: ./app
-src_dir: ./
+project_dir: ./
+src_dir: ./app
 output_dir: ./doc
 media_dir: ./media
 project_github: https://github.com/jacobwilliams/LOM
