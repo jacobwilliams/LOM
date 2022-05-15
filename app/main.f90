@@ -5,9 +5,9 @@
     program main
 
     use altitude_maintenance_module,    only: segment
-    use fortran_astrodynamics_toolkit,  only: wp,km2m
+    use fortran_astrodynamics_toolkit,  only: km2m
     use pyplot_module,                  only : pyplot
-    use iso_fortran_env,                only: error_unit,output_unit
+    use iso_fortran_env, only: error_unit,output_unit, wp => real64
 
     implicit none
 
@@ -18,25 +18,28 @@
     real(wp),parameter :: alt0 = 100.0_wp        !! initial altitude for circular orbit (km)
     real(wp),parameter :: deadband_alt = 10.0_wp !! altitude below initial to trigger periapsis raise (km)
 
-    ! full data set:
-    real(wp),parameter :: inc_start = 80.0_wp
-    real(wp),parameter :: inc_stop  = 180.0_wp
-    real(wp),parameter :: inc_step  = 2.0_wp
-    real(wp),parameter :: lan_start = -180.0_wp
-    real(wp),parameter :: lan_stop  = 180.0_wp
-    real(wp),parameter :: lan_step  = 4.0_wp
-    integer,parameter  :: grav_n = 20         !! max grav degree
-    integer,parameter  :: grav_m = 20         !! max grav order
+    !... note: these should be command line arguments,
+    !          or input from a config file
 
-    ! test case:
+    ! full data set:
     ! real(wp),parameter :: inc_start = 80.0_wp
     ! real(wp),parameter :: inc_stop  = 180.0_wp
-    ! real(wp),parameter :: inc_step  = 10.0_wp
+    ! real(wp),parameter :: inc_step  = 2.0_wp
     ! real(wp),parameter :: lan_start = -180.0_wp
     ! real(wp),parameter :: lan_stop  = 180.0_wp
-    ! real(wp),parameter :: lan_step  = 20.0_wp
-    ! integer,parameter  :: grav_n = 8        !! max grav degree
-    ! integer,parameter  :: grav_m = 8        !! max grav order
+    ! real(wp),parameter :: lan_step  = 4.0_wp
+    ! integer,parameter  :: grav_n = 20         !! max grav degree
+    ! integer,parameter  :: grav_m = 20         !! max grav order
+
+    ! test case:
+    real(wp),parameter :: inc_start = 80.0_wp
+    real(wp),parameter :: inc_stop  = 180.0_wp
+    real(wp),parameter :: inc_step  = 20.0_wp
+    real(wp),parameter :: lan_start = -180.0_wp
+    real(wp),parameter :: lan_stop  = 180.0_wp
+    real(wp),parameter :: lan_step  = 30.0_wp
+    integer,parameter  :: grav_n = 8        !! max grav degree
+    integer,parameter  :: grav_m = 8        !! max grav order
 
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
@@ -98,7 +101,7 @@
     end do
 
     ! create a contour plot for the delta-v:
-    call plt%add_contour(x, y, z, label='contour', linestyle='-', &
+    call plt%add_contour(x, y, z, linestyle='-', &
                          linewidth=2, filled=.true., cmap='Blues',&
                          colorbar=.true.,istat=istat)
     call plt%savefig('lom.png',pyfile='lom.py',istat=istat)

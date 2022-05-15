@@ -1,0 +1,17 @@
+name = "lom"
+author = "Jacob Williams"
+copyright  = "Copyright (c) 2022, Jacob Williams"
+license = "BSD-3"
+description = "Lunar Orbit Maintenance"
+homepage = "https://github.com/jacobwilliams/LOM"
+keywords = ["orbital mechanics"]
+
+[build]
+auto-executables = true
+auto-examples = false
+auto-tests = false
+
+[dependencies]
+ddeabm = { git="https://github.com/jacobwilliams/ddeabm.git", tag = "3.0.0" }
+fortran-astrodynamics-toolkit = { git="https://github.com/jacobwilliams/Fortran-Astrodynamics-Toolkit.git", tag = "0.3" }
+pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git", tag = "3.2.0" }

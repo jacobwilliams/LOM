@@ -12,14 +12,14 @@
 
     use fortran_astrodynamics_toolkit
     use ddeabm_module,   only: ddeabm_class,ddeabm_with_event_class
-    use iso_fortran_env, only: error_unit,output_unit
+    use iso_fortran_env, only: error_unit,output_unit, wp => real64
 
     implicit none
 
     private
 
-    character(len=*),parameter :: ephemeris_file = '../data/eph/JPLEPH_gfortran_mac.421'
-    character(len=*),parameter :: gravfile       = '../data/grav/gggrx_0020pm_sha.tab'
+    character(len=*),parameter :: ephemeris_file = './data/eph/JPLEPH_gfortran_mac.421'
+    character(len=*),parameter :: gravfile       = './data/grav/gggrx_0020pm_sha.tab'
 
     type,extends(ddeabm_with_event_class),public :: segment
 

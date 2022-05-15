@@ -1,2 +1,13 @@
 /bin
 /lib
+/doc
+/build
+
+.DS_Store
+*.mod
+*.o
+*.lib
+
+# tests
+/*.png
+/*.py
