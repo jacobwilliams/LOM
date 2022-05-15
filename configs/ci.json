@@ -11,6 +11,10 @@
     "lan_start"    : -180.0,
     "lan_stop"     : -170.0,
     "lan_step"     : 10.0,
-    "grav_n"       : 8,              // max grav degree
-    "grav_m"       : 8               // max grav order
+    "ephemeris_file" : "./data/eph/JPLEPH_gfortran_mac.421", // ephemeris file
+    "gravfile"       : "./data/grav/gggrx_0020pm_sha.tab",   // moon gravity file
+    "grav_n"         : 8,              // max grav degree
+    "grav_m"         : 8               // max grav order
 }
+
+
