@@ -18,12 +18,11 @@
 
     private
 
-    character(len=*),parameter :: ephemeris_file = './data/eph/JPLEPH_gfortran_mac.421'
-    character(len=*),parameter :: gravfile       = './data/grav/gggrx_0020pm_sha.tab'
-
     type,extends(ddeabm_with_event_class),public :: segment
 
         !! the main class for integrating a low-lunar orbit.
+
+        private
 
         integer :: event = 0 !! event function to use:
                              !!
@@ -62,7 +61,8 @@
 !>
 !  Initialize the segment for integration.
 
-    subroutine initialize_segment(me,alt0,deadband_alt,grav_n,grav_m)
+    subroutine initialize_segment(me,alt0,deadband_alt,grav_n,grav_m,&
+                                  ephemeris_file,gravfile)
 
     implicit none
 
@@ -71,6 +71,8 @@
     real(wp),intent(in) :: deadband_alt
     integer,intent(in) :: grav_n
     integer,intent(in) :: grav_m
+    character(len=*),intent(in) :: ephemeris_file
+    character(len=*),intent(in) :: gravfile
 
     logical :: status_ok
 

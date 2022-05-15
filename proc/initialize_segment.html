@@ -88,7 +88,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 8.0% of total for procedures.">22 statements</a>
+    title=" 8.5% of total for procedures.">24 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/altitude_maintenance.f90"> Source File</a></li>
   </ul>
@@ -125,7 +125,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>private subroutine initialize_segment(me, alt0, deadband_alt, grav_n, grav_m)</h2>
+    <h2>private subroutine initialize_segment(me, alt0, deadband_alt, grav_n, grav_m, ephemeris_file, gravfile)</h2>
     
 
     <p>Initialize the segment for integration.</p>
@@ -164,6 +164,18 @@
   <td></td>  <td></td><td>::</td>
   <td><strong>grav_m</strong></td><td></td>
 </tr>
+<tr>
+  <td><span class="anchor" id="variable-ephemeris_file"></span>character(len=*),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>ephemeris_file</strong></td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-gravfile"></span>character(len=*),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>gravfile</strong></td><td></td>
+</tr>
 </tbody>
 </table>
 
@@ -193,7 +205,8 @@
     
     <section>
     <h2><span class="anchor" id="src"></span>Source Code</h2>
-    <div class="highlight"><pre><span></span><span class="w">    </span><span class="k">subroutine </span><span class="n">initialize_segment</span><span class="p">(</span><span class="n">me</span><span class="p">,</span><span class="n">alt0</span><span class="p">,</span><span class="n">deadband_alt</span><span class="p">,</span><span class="n">grav_n</span><span class="p">,</span><span class="n">grav_m</span><span class="p">)</span><span class="w"></span>
+    <div class="highlight"><pre><span></span><span class="w">    </span><span class="k">subroutine </span><span class="n">initialize_segment</span><span class="p">(</span><span class="n">me</span><span class="p">,</span><span class="n">alt0</span><span class="p">,</span><span class="n">deadband_alt</span><span class="p">,</span><span class="n">grav_n</span><span class="p">,</span><span class="n">grav_m</span><span class="p">,&amp;</span><span class="w"></span>
+<span class="w">                                  </span><span class="n">ephemeris_file</span><span class="p">,</span><span class="n">gravfile</span><span class="p">)</span><span class="w"></span>
 
 <span class="w">    </span><span class="k">implicit none</span>
 
@@ -202,6 +215,8 @@
 <span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="n">wp</span><span class="p">),</span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">deadband_alt</span><span class="w"></span>
 <span class="w">    </span><span class="kt">integer</span><span class="p">,</span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">grav_n</span><span class="w"></span>
 <span class="w">    </span><span class="kt">integer</span><span class="p">,</span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">grav_m</span><span class="w"></span>
+<span class="w">    </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">ephemeris_file</span><span class="w"></span>
+<span class="w">    </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">gravfile</span><span class="w"></span>
 
 <span class="w">    </span><span class="kt">logical</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">status_ok</span><span class="w"></span>
 

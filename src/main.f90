@@ -26,6 +26,8 @@
     real(wp) :: lan_step
     integer  :: grav_n     !! max grav degree
     integer  :: grav_m     !! max grav order
+    character(len=:),allocatable :: ephemeris_file !! earth/moon/sun ephemeris file
+    character(len=:),allocatable :: gravfile       !! moon spherical harmonics gravity file
 
     real(wp),dimension(:),allocatable :: x    !! x array for plot (raan)
     real(wp),dimension(:),allocatable :: y    !! y array for plot (inc)
@@ -48,7 +50,7 @@
     call read_config_file()
 
     ! initialize the segment:
-    call seg%initialize_seg(alt0,deadband_alt,grav_n,grav_m)
+    call seg%initialize_seg(alt0,deadband_alt,grav_n,grav_m,ephemeris_file,gravfile)
 
     write(dt_max_str,'(I10)') int(dt_max); dt_max_str = adjustl(dt_max_str)
     write(deadband_alt_str,'(I10)') int(deadband_alt); deadband_alt_str = adjustl(deadband_alt_str)
@@ -163,6 +165,10 @@
             call json%get('lan_step',     lan_step,     found); if (.not. found) error stop 'lan_step not found in config file.'
             call json%get('grav_n',       grav_n,       found); if (.not. found) error stop 'grav_n not found in config file.'
             call json%get('grav_m',       grav_m,       found); if (.not. found) error stop 'grav_m not found in config file.'
+            call json%get('ephemeris_file', ephemeris_file, found)
+                if (.not. found) error stop 'ephemeris_file not found in config file.'
+            call json%get('gravfile',       gravfile,       found)
+                if (.not. found) error stop 'gravfile not found in config file.'
         end if
 
         call json%destroy()
